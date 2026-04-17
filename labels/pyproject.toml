@@ -1,0 +1,23 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "kuler"
+version = "0.1.0"
+description = "Extract dominant colors from an image and generate a 5-color Adobe Kuler-style palette strip."
+readme = "README.md"
+requires-python = ">=3.9"
+authors = [
+    { name = "Your Name" }
+]
+
+dependencies = [
+    "Pillow>=10.0"
+]
+
+[project.scripts]
+kuler = "kuler:main"
+
+[tool.setuptools]
+py-modules = ["kuler"]
