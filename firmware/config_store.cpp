@@ -1,6 +1,7 @@
 #include "config_store.h"
 #include <Arduino.h>
 #include <LittleFS.h>
+#include <cstdint>
 #include "secrets.h"
 
 namespace
@@ -30,11 +31,11 @@ String json_str(const String& json, const char* key)
       return {};
    }
    position += key_token.length();
-   while (position < (int)json.length() && (json[position] == ':' || json[position] == ' '))
+   while (position < static_cast<int32_t>(json.length()) && (json[position] == ':' || json[position] == ' '))
    {
       ++position;
    }
-   if (position >= (int)json.length() || json[position] != '"')
+   if (position >= static_cast<int32_t>(json.length()) || json[position] != '"')
    {
       return {};
    }
@@ -52,11 +53,11 @@ int json_int(const String& json, const char* key)
       return -1;
    }
    position += key_token.length();
-   while (position < (int)json.length() && (json[position] == ':' || json[position] == ' '))
+   while (position < static_cast<int32_t>(json.length()) && (json[position] == ':' || json[position] == ' '))
    {
       ++position;
    }
-   if (position >= (int)json.length())
+   if (position >= static_cast<int32_t>(json.length()))
    {
       return -1;
    }

@@ -2,18 +2,22 @@
 #include <Arduino.h>
 #include <MFRC522.h>
 #include <SPI.h>
+#include <cstdint>
 
-#define SS_PIN 15
-#define RST_PIN 27
+namespace
+{
 
-static MFRC522 rfid(SS_PIN, RST_PIN);
-static MFRC522::Uid _last_uid;
+constexpr uint8_t SS_PIN = 15;
+constexpr uint8_t RST_PIN = 27;
 
-static String build_uid_string()
+MFRC522 rfid(SS_PIN, RST_PIN);
+MFRC522::Uid _last_uid;
+
+String build_uid_string()
 {
    String uid_string;
 
-   for (byte index = 0; index < rfid.uid.size; index++)
+   for (uint8_t index = 0; index < rfid.uid.size; ++index)
    {
       if (rfid.uid.uidByte[index] < 0x10)
       {
@@ -26,6 +30,8 @@ static String build_uid_string()
    uid_string.toUpperCase();
    return uid_string;
 }
+
+}  // namespace
 
 void rfid_setup()
 {
@@ -40,13 +46,13 @@ void rfid_setup()
 
 String rfid_loop()
 {
-   if (rfid.PICC_IsNewCardPresent() == false)
+   if (!rfid.PICC_IsNewCardPresent())
    {
       _last_uid.size = 0;
       return "";
    }
 
-   if (rfid.PICC_ReadCardSerial() == false)
+   if (!rfid.PICC_ReadCardSerial())
    {
       return "";
    }
@@ -60,7 +66,7 @@ String rfid_loop()
 
    _last_uid = rfid.uid;
 
-   String uid_string = build_uid_string();
+   auto uid_string = build_uid_string();
 
    Serial.print("UID: ");
    Serial.println(uid_string);

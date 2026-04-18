@@ -1,15 +1,19 @@
 #include "buttons.h"
 #include <Arduino.h>
 #include <array>
+#include <cstdint>
 
-#define BUTTON_BLUE_GPIO_ID 4
-#define BUTTON_YELLOW_GPIO_ID 2
-#define BUTTON_RED_GPIO_ID 16
-#define BUTTON_GREEN_GPIO_ID 22
+namespace
+{
 
-static std::array<bool, 4> _button_states{false, false, false, false};
+constexpr uint8_t BUTTON_BLUE_GPIO_ID = 4;
+constexpr uint8_t BUTTON_YELLOW_GPIO_ID = 2;
+constexpr uint8_t BUTTON_RED_GPIO_ID = 16;
+constexpr uint8_t BUTTON_GREEN_GPIO_ID = 22;
 
-static std::array<bool, 4> read_states()
+std::array<bool, 4> _button_states{false, false, false, false};
+
+std::array<bool, 4> read_states()
 {
    return {
       digitalRead(BUTTON_BLUE_GPIO_ID) == LOW,
@@ -18,6 +22,8 @@ static std::array<bool, 4> read_states()
       digitalRead(BUTTON_GREEN_GPIO_ID) == LOW,
    };
 }
+
+}  // namespace
 
 void buttons_setup()
 {
@@ -31,10 +37,10 @@ void buttons_setup()
 
 std::array<bool, 4> buttons_loop()
 {
-   std::array<bool, 4> new_states = read_states();
-   std::array<bool, 4> just_pressed = {false, false, false, false};
+   auto new_states = read_states();
+   auto just_pressed = std::array<bool, 4>{};
 
-   for (int i = 0; i < 4; i++)
+   for (int32_t i = 0; i < static_cast<int32_t>(new_states.size()); ++i)
    {
       if (new_states[i] != _button_states[i])
       {

@@ -28,29 +28,28 @@ void loop()
    web_server_loop();
 
    const auto pressed = buttons_loop();
-   for (int i = 0; i < 4; ++i)
+   for (int32_t i = 0; i < static_cast<int32_t>(pressed.size()); ++i)
    {
       if (pressed[i])
+      {
          api_send_button(i);
+      }
    }
 
    const auto uid = rfid_loop();
-   if (uid.length() > 0)
+   if (!uid.isEmpty())
    {
-      auto uid_upper = uid;
-      uid_upper.toUpperCase();
+      web_server_set_last_rfid(uid);
 
-      web_server_set_last_rfid(uid_upper);
-
-      const auto label = config_store_find_label(uid_upper);
-      if (label.length() > 0)
+      const auto label = config_store_find_label(uid);
+      if (!label.isEmpty())
       {
          api_play(label);
       }
       else
       {
          Serial.print("rfid not mapped: ");
-         Serial.println(uid_upper);
+         Serial.println(uid);
       }
    }
 }
