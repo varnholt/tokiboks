@@ -19,7 +19,7 @@ static const char WEB_HTML[] = R"TOKIWEB(<!DOCTYPE html>
 <main>
   <nav class="tabs">
     <button class="tab active" data-tab="creds">Credentials</button>
-    <button class="tab" data-tab="srv">Server</button>
+    <button class="tab" data-tab="srv">Music Player</button>
     <button class="tab" data-tab="map">Music Mapping</button>
   </nav>
 
@@ -44,8 +44,11 @@ static const char WEB_HTML[] = R"TOKIWEB(<!DOCTYPE html>
 
   <section id="tab-srv" class="panel">
     <form id="form-srv">
-      <label><span>Host / IP address</span><input type="text" name="server_host" autocomplete="off"></label>
-      <label><span>Port</span><input type="number" name="server_port" min="1" max="65535"></label>
+      <fieldset>
+        <legend>Music player</legend>
+        <label><span>Host / IP address</span><input type="text" name="server_host" autocomplete="off"></label>
+        <label><span>Port</span><input type="number" name="server_port" min="1" max="65535"></label>
+      </fieldset>
       <div class="row"><button class="btn" type="submit">Save</button></div>
     </form>
   </section>
