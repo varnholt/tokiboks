@@ -6,17 +6,12 @@
 #include "web_content.h"
 #include "config_store.h"
 
-static WebServer server(80);
-static String    last_rfid;
+namespace {
 
-void web_server_set_last_rfid(const String& uid)
-{
-    last_rfid = uid;
-}
+WebServer server(80);
+String    last_rfid;
 
-// ---- auth ----
-
-static bool auth_ok()
+bool auth_ok()
 {
     const auto user = config_store_admin_username();
     const auto pass = config_store_admin_password();
@@ -26,9 +21,7 @@ static bool auth_ok()
     return false;
 }
 
-// ---- helpers ----
-
-static void serve_json(const char* path, const char* fallback)
+void serve_json(const char* path, const char* fallback)
 {
     if (LittleFS.exists(path)) {
         auto f = LittleFS.open(path, "r");
@@ -39,7 +32,7 @@ static void serve_json(const char* path, const char* fallback)
     }
 }
 
-static void save_json(const char* path)
+void save_json(const char* path)
 {
     const auto body = server.arg("plain");
     if (body.isEmpty()) {
@@ -56,7 +49,7 @@ static void save_json(const char* path)
     server.send(200, "application/json", R"({"ok":true})");
 }
 
-static String default_mapping()
+String default_mapping()
 {
     String j = R"({"entries":[)";
     for (int i = 0; i < 100; ++i) {
@@ -65,6 +58,13 @@ static String default_mapping()
     }
     j += "]}";
     return j;
+}
+
+} // namespace
+
+void web_server_set_last_rfid(const String& uid)
+{
+    last_rfid = uid;
 }
 
 // ---- setup ----

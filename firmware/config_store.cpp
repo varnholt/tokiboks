@@ -1,11 +1,14 @@
 #include <Arduino.h>
 #include <LittleFS.h>
 #include "config_store.h"
+#include "secrets.h"
 
-static String _creds;
-static String _server;
+namespace {
 
-static String read_file(const char* path)
+String _creds;
+String _server;
+
+String read_file(const char* path)
 {
     if (!LittleFS.exists(path)) return {};
     auto f = LittleFS.open(path, "r");
@@ -14,7 +17,7 @@ static String read_file(const char* path)
     return s;
 }
 
-static String json_str(const String& json, const char* key)
+String json_str(const String& json, const char* key)
 {
     const auto search = String('"') + key + '"';
     auto pos = json.indexOf(search);
@@ -27,7 +30,7 @@ static String json_str(const String& json, const char* key)
     return end < 0 ? String{} : json.substring(pos, end);
 }
 
-static int json_int(const String& json, const char* key)
+int json_int(const String& json, const char* key)
 {
     const auto search = String('"') + key + '"';
     auto pos = json.indexOf(search);
@@ -37,6 +40,8 @@ static int json_int(const String& json, const char* key)
     if (pos >= (int)json.length()) return -1;
     return json.substring(pos).toInt();
 }
+
+} // namespace
 
 void config_store_setup()
 {
@@ -56,13 +61,21 @@ String config_store_admin_password() { return json_str(_creds, "admin_password")
 String config_store_server_host()
 {
     const auto h = json_str(_server, "server_host");
-    return h.isEmpty() ? "192.168.0.92" : h;
+#ifdef DEFAULT_SERVER_HOST
+    return h.isEmpty() ? DEFAULT_SERVER_HOST : h;
+#else
+    return h;
+#endif
 }
 
 int config_store_server_port()
 {
     const auto p = json_int(_server, "server_port");
-    return p > 0 ? p : 8000;
+#ifdef DEFAULT_SERVER_PORT
+    return p > 0 ? p : DEFAULT_SERVER_PORT;
+#else
+    return p > 0 ? p : 0;
+#endif
 }
 
 String config_store_find_label(const String& uid)

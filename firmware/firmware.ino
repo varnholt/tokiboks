@@ -8,12 +8,18 @@
 void setup()
 {
     Serial.begin(115200);
-    config_store_setup();   // mounts LittleFS, caches credentials + server config
+
+    // mount LittleFS, cache credentials + server config
+    config_store_setup();   
     rfid_setup();
     buttons_setup();
-    wifi_setup();           // reads WiFi credentials from config_store
+
+    // read WiFi credentials from config_store
+    wifi_setup();           
     web_server_setup();
-    api_client_setup();     // reads server URL from config_store
+
+    // read server URL from config_store
+    api_client_setup();     
 }
 
 void loop()
