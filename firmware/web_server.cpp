@@ -64,7 +64,7 @@ void save_json(const char* path)
 String default_mapping()
 {
    String json = R"({"entries":[)";
-   for (int i = 0; i < 100; ++i)
+   for (int32_t i = 0; i < 100; ++i)
    {
       if (i > 0)
       {

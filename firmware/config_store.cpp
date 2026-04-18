@@ -44,7 +44,7 @@ String json_str(const String& json, const char* key)
    return value_end < 0 ? String{} : json.substring(position, value_end);
 }
 
-int json_int(const String& json, const char* key)
+int32_t json_int(const String& json, const char* key)
 {
    const auto key_token = String('"') + key + '"';
    auto position = json.indexOf(key_token);
@@ -107,7 +107,7 @@ String config_store_server_host()
 #endif
 }
 
-int config_store_server_port()
+int32_t config_store_server_port()
 {
    const auto port = json_int(_server_json, "server_port");
 #ifdef DEFAULT_SERVER_PORT

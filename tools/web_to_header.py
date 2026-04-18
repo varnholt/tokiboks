@@ -34,6 +34,6 @@ with open(OUT, "w", encoding="utf-8", newline="\n") as out:
         src = os.path.join(DATA, filename)
         with open(src, "r", encoding="utf-8") as f:
             content = f.read()
-        out.write(f'static const char {name}[] PROGMEM = R"{DELIM}({content}){DELIM}";\n\n')
+        out.write(f'static const char {name}[] = R"{DELIM}({content}){DELIM}";\n\n')
 
 print(f"generated  {os.path.relpath(OUT)}")

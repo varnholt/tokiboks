@@ -66,7 +66,7 @@ String rfid_loop()
 
    _last_uid = rfid.uid;
 
-   auto uid_string = build_uid_string();
+   const auto uid_string = build_uid_string();
 
    Serial.print("UID: ");
    Serial.println(uid_string);
