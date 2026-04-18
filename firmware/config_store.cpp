@@ -48,8 +48,10 @@ void config_store_setup()
     _server = read_file("/server.json");
 }
 
-String config_store_wifi_ssid()     { return json_str(_creds,  "wifi_ssid");     }
-String config_store_wifi_password() { return json_str(_creds,  "wifi_password"); }
+String config_store_wifi_ssid()      { return json_str(_creds, "wifi_ssid");      }
+String config_store_wifi_password()  { return json_str(_creds, "wifi_password");  }
+String config_store_admin_username() { return json_str(_creds, "admin_username"); }
+String config_store_admin_password() { return json_str(_creds, "admin_password"); }
 
 String config_store_server_host()
 {
