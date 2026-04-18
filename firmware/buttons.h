@@ -3,10 +3,10 @@
 
 enum BUTTON_ID
 {
-    BUTTON_BLUE   = 0,
-    BUTTON_RED    = 1,
-    BUTTON_YELLOW = 2,
-    BUTTON_GREEN  = 3,
+   BUTTON_BLUE = 0,
+   BUTTON_RED = 1,
+   BUTTON_YELLOW = 2,
+   BUTTON_GREEN = 3,
 };
 
 void buttons_setup();
