@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>tokiboks</title>
+<link rel="stylesheet" href="/style.css">
+</head>
+<body>
+<header>
+  <span class="logo">tokiboks</span>
+  <span class="sub">configuration</span>
+</header>
+<main>
+  <nav class="tabs">
+    <button class="tab active" data-tab="creds">Credentials</button>
+    <button class="tab" data-tab="srv">Server</button>
+    <button class="tab" data-tab="map">Music Mapping</button>
+  </nav>
+
+  <section id="tab-creds" class="panel active">
+    <form id="form-creds">
+      <fieldset>
+        <legend>WiFi</legend>
+        <label><span>SSID</span><input type="text" name="wifi_ssid" autocomplete="off"></label>
+        <label><span>Password</span><input type="password" name="wifi_password" autocomplete="new-password"></label>
+      </fieldset>
+      <fieldset>
+        <legend>Admin</legend>
+        <label><span>Username</span><input type="text" name="admin_username" autocomplete="off"></label>
+        <label><span>Password</span><input type="password" name="admin_password" autocomplete="new-password"></label>
+      </fieldset>
+      <div class="row">
+        <button class="btn" type="submit">Save</button>
+        <button class="btn outline" type="button" id="btn-restart">Restart device</button>
+      </div>
+    </form>
+  </section>
+
+  <section id="tab-srv" class="panel">
+    <form id="form-srv">
+      <label><span>Host / IP address</span><input type="text" name="server_host" autocomplete="off"></label>
+      <label><span>Port</span><input type="number" name="server_port" min="1" max="65535"></label>
+      <div class="row"><button class="btn" type="submit">Save</button></div>
+    </form>
+  </section>
+
+  <section id="tab-map" class="panel">
+    <div class="tb-hdr"><button id="btn-save-map" class="btn">Save</button></div>
+    <div class="tbl-wrap">
+      <table>
+        <thead><tr>
+          <th class="th-n">#</th>
+          <th class="th-rfid">RFID</th>
+          <th>What to play</th>
+        </tr></thead>
+        <tbody id="map-body"></tbody>
+      </table>
+    </div>
+  </section>
+</main>
+<div id="toast"></div>
+<script src="/app.js"></script>
+</body>
+</html>

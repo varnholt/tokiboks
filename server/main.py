@@ -114,6 +114,20 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(b"invalid action")
             return
 
+        if parsed.path == "/play":
+            path = query.get("path", [""])[0].strip()
+            if path:
+                player.load(path)
+                player.resume_if_paused()
+                self.send_response(200)
+                self.end_headers()
+                self.wfile.write(path.encode("utf-8"))
+            else:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(b"path required")
+            return
+
         if parsed.path == "/rfid":
             uid = query.get("uid", [""])[0].strip().upper()
 
