@@ -101,6 +101,8 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(74,108,247,.12);
 }
 
+.hint { font-size: .75rem; color: var(--mut); }
+
 .row { padding-top: .25rem; display: flex; gap: .75rem; align-items: center; }
 
 .btn.outline {

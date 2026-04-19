@@ -52,13 +52,16 @@ document.getElementById('form-creds').addEventListener('submit', async e => {
   } catch { toast('Save failed.', false); }
 });
 
-document.getElementById('btn-restart').addEventListener('click', async () => {
+const restartDevice = async () => {
   if (!confirm('Restart the device now?')) return;
   try {
     await fetch('/api/restart', { method: 'POST' });
     toast('Device is restarting\u2026');
   } catch { toast('Restart failed.', false); }
-});
+};
+
+document.getElementById('btn-restart').addEventListener('click', restartDevice);
+document.getElementById('btn-restart-srv').addEventListener('click', restartDevice);
 
 // Server config
 get('/api/server-config').then(d => {

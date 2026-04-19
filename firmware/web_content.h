@@ -29,6 +29,7 @@ static const char WEB_HTML[] = R"TOKIWEB(<!DOCTYPE html>
         <legend>WiFi</legend>
         <label><span>SSID</span><input type="text" name="wifi_ssid" autocomplete="off"></label>
         <label><span>Password</span><input type="password" name="wifi_password" autocomplete="new-password"></label>
+        <p class="hint">WiFi changes take effect after restarting the device.</p>
       </fieldset>
       <fieldset>
         <legend>Admin</legend>
@@ -48,8 +49,12 @@ static const char WEB_HTML[] = R"TOKIWEB(<!DOCTYPE html>
         <legend>Music player</legend>
         <label><span>Host / IP address</span><input type="text" name="server_host" autocomplete="off"></label>
         <label><span>Port</span><input type="number" name="server_port" min="1" max="65535"></label>
+        <p class="hint">Changes take effect after restarting the device.</p>
       </fieldset>
-      <div class="row"><button class="btn" type="submit">Save</button></div>
+      <div class="row">
+        <button class="btn" type="submit">Save</button>
+        <button class="btn outline" type="button" id="btn-restart-srv">Restart device</button>
+      </div>
     </form>
   </section>
 
@@ -176,6 +181,8 @@ input:focus {
   box-shadow: 0 0 0 3px rgba(74,108,247,.12);
 }
 
+.hint { font-size: .75rem; color: var(--mut); }
+
 .row { padding-top: .25rem; display: flex; gap: .75rem; align-items: center; }
 
 .btn.outline {
@@ -234,8 +241,8 @@ td {
   border-bottom: 1px solid #edf0f7;
   vertical-align: middle;
 }
-tbody tr:last-child td   { border-bottom: none; }
-tbody tr:nth-child(even) { background: var(--alt); }
+tbody tr:last-child td  { border-bottom: none; }
+tbody tr:nth-child(even){ background: var(--alt); }
 tbody tr.hi {
   background: var(--hl) !important;
   box-shadow: inset 3px 0 0 var(--hlb);
@@ -343,13 +350,16 @@ document.getElementById('form-creds').addEventListener('submit', async e => {
   } catch { toast('Save failed.', false); }
 });
 
-document.getElementById('btn-restart').addEventListener('click', async () => {
+const restartDevice = async () => {
   if (!confirm('Restart the device now?')) return;
   try {
     await fetch('/api/restart', { method: 'POST' });
     toast('Device is restarting\u2026');
   } catch { toast('Restart failed.', false); }
-});
+};
+
+document.getElementById('btn-restart').addEventListener('click', restartDevice);
+document.getElementById('btn-restart-srv').addEventListener('click', restartDevice);
 
 // Server config
 get('/api/server-config').then(d => {
@@ -439,3 +449,4 @@ setInterval(() =>
   }).catch(() => {}),
 2000);
 )TOKIWEB";
+
