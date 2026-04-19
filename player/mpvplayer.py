@@ -82,11 +82,14 @@ class MpvPlayer(AudioPlayer):
             client.connect(self.ipc_path)
             client.sendall(payload)
 
-            response = client.recv(4096)
-            if response == b"":
-                return None
-
-            return json.loads(response.decode("utf-8", errors="replace"))
+            reader = client.makefile("rb")
+            while True:
+                line = reader.readline()
+                if not line:
+                    return None
+                parsed = json.loads(line.decode("utf-8", errors="replace"))
+                if "event" not in parsed:
+                    return parsed
         finally:
             client.close()
 

@@ -1,6 +1,5 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
 from urllib.parse import urlparse, parse_qs
-import csv
 import mpvplayer
 from enum import IntEnum
 import threading
@@ -12,7 +11,6 @@ class ButtonId(IntEnum):
     BUTTON_YELLOW = 2
     BUTTON_GREEN = 3
 
-CSV_FILE = "mapping.csv"
 HOST = "0.0.0.0"
 PORT = 8000
 FADE_OUT_SECONDS = 50
@@ -22,18 +20,6 @@ sleep_until = None
 player = mpvplayer.MpvPlayer()
 
 
-def load_mapping():
-    mapping = {}
-    with open(CSV_FILE, newline="", encoding="utf-8") as csv_file:
-        reader = csv.reader(csv_file)
-        for row in reader:
-            if len(row) < 2:
-                continue
-            uid = row[0].strip().upper()
-            path = row[1].strip()
-            mapping[uid] = path
-    return mapping
-    
 def sleep_watchdog():
     global sleep_until
     while True:
@@ -54,9 +40,6 @@ def sleep_watchdog():
                 
             print(sleep_until - time.time())
             
-
-mapping = load_mapping()
-
 
 class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
@@ -114,24 +97,18 @@ class Handler(BaseHTTPRequestHandler):
             self.wfile.write(b"invalid action")
             return
 
-        if parsed.path == "/rfid":
-            uid = query.get("uid", [""])[0].strip().upper()
-
-            if uid in mapping:
-                path = mapping[uid]
-                print(path)
-
+        if parsed.path == "/play":
+            path = query.get("path", [""])[0].strip()
+            if path:
                 player.load(path)
                 player.resume_if_paused()
-
                 self.send_response(200)
                 self.end_headers()
                 self.wfile.write(path.encode("utf-8"))
-                return
-
-            self.send_response(404)
-            self.end_headers()
-            self.wfile.write(b"id not found")
+            else:
+                self.send_response(400)
+                self.end_headers()
+                self.wfile.write(b"path required")
             return
 
         self.send_response(404)

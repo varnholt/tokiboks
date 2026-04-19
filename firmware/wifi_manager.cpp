@@ -1,49 +1,74 @@
+#include "wifi_manager.h"
 #include <Arduino.h>
 #include <WiFi.h>
-#include "wifi_manager.h"
+#include <cstdint>
+#include "config_store.h"
 #include "secrets.h"
 
-static const char* ssid = WIFI_SSID;
-static const char* password = WIFI_PASSWORD;
+namespace
+{
 
-static wl_status_t _wifi_status = WL_IDLE_STATUS;
+wl_status_t _wifi_status = WL_IDLE_STATUS;
+
+void start_ap_mode()
+{
+   constexpr auto ap_ssid = "tokiboks";
+   WiFi.mode(WIFI_AP);
+   WiFi.softAP(ap_ssid);  // open network, no password
+   Serial.println("\nwifi: no credentials — AP mode started");
+   Serial.print("connect to SSID '");
+   Serial.print(ap_ssid);
+   Serial.print("' then open: http://");
+   Serial.println(WiFi.softAPIP());
+}
+
+}  // namespace
 
 void wifi_setup()
 {
-    WiFi.mode(WIFI_STA);
-    WiFi.begin(ssid, password);
+   auto ssid = config_store_wifi_ssid();
+   auto password = config_store_wifi_password();
 
-    Serial.print("connecting");
+   if (ssid.isEmpty())
+   {
+      ssid = WIFI_SSID;
+      password = WIFI_PASSWORD;
+   }
 
-    int attempt = 0;
+   if (ssid.isEmpty())
+   {
+      start_ap_mode();
+      return;
+   }
 
-    while (WiFi.status() != WL_CONNECTED)
-    {
-        delay(500);
-        Serial.print(".");
-        attempt++;
+   WiFi.mode(WIFI_STA);
+   WiFi.begin(ssid.c_str(), password.c_str());
+   Serial.print("connecting");
 
-        if (attempt > 30)
-        {
-            Serial.println(" wifi connection failed");
-            ESP.restart();
-        }
-    }
+   for (int32_t attempt = 0; WiFi.status() != WL_CONNECTED; ++attempt)
+   {
+      delay(500);
+      Serial.print(".");
+      if (attempt > 30)
+      {
+         start_ap_mode();
+         return;
+      }
+   }
 
-    Serial.println();
-    Serial.println("connected");
-    Serial.print("Tokiboks IP is: ");
-    Serial.println(WiFi.localIP());
+   Serial.println();
+   Serial.println("connected");
+   Serial.print("ip: ");
+   Serial.println(WiFi.localIP());
 }
 
 void wifi_loop()
 {
-    wl_status_t current = WiFi.status();
-
-    if (current != _wifi_status)
-    {
-        _wifi_status = current;
-        Serial.print("wifi status changed to: ");
-        Serial.println(static_cast<int>(_wifi_status));
-    }
+   const auto current_status = WiFi.status();
+   if (current_status != _wifi_status)
+   {
+      _wifi_status = current_status;
+      Serial.print("wifi status: ");
+      Serial.println(static_cast<int32_t>(_wifi_status));
+   }
 }
