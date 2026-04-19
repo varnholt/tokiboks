@@ -106,7 +106,7 @@ cd player
 python main.py
 ```
 
-The player listens on port `8000` by default. When the ESP32 scans an RFID card it sends a `GET /play?path=<label>` request — the label comes from the mapping configured in the web UI.
+The player listens on port `8000` by default. When the ESP32 scans an RFID card it looks up the label in the web UI mapping and sends a `GET /play?path=<label>` request to the player.
 
 ### Button actions
 
@@ -170,6 +170,19 @@ Tool for generating printable credit-card-sized artwork for the RFID cards. Requ
 ```bash
 cd labels
 uv run create_card.py --help
+```
+
+---
+
+## Troubleshooting
+
+### Can't reach the web UI after a reboot
+
+Your PC may have a stale ARP cache entry — it's sending packets to an outdated MAC address. Flush the cache to force re-resolution:
+
+```bash
+arp -d *                                    # Linux / macOS
+netsh interface ip delete arpcache          # Windows (run as admin)
 ```
 
 ---
