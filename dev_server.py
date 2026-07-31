@@ -16,11 +16,17 @@ from __future__ import annotations
 import json
 import mimetypes
 import os
+import urllib.error
+import urllib.request
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, quote, urlparse
 
 DATA_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "firmware", "data")
 HOST, PORT = "localhost", 8080
+
+# same safe set as url_encode() in firmware/api_client.cpp
+URL_SAFE_CHARS = "-_.~/:%"
+PLAYER_TIMEOUT_SECONDS = 1.0
 
 DEFAULTS: dict[str, object] = {
     "credentials.json": {
@@ -68,15 +74,54 @@ class Handler(BaseHTTPRequestHandler):
         self._static(path)
 
     def do_POST(self) -> None:
-        path = urlparse(self.path).path
+        parsed = urlparse(self.path)
+        path   = parsed.path
+
         if path == "/api/restart":
             self._json(200, {"ok": True})
             print("  [dev] restart requested — would reboot device here")
             return
+
+        if path == "/api/play":
+            target = parse_qs(parsed.query).get("path", [""])[0].strip()
+            if not target:
+                self._json(400, {"error": "path required"})
+                return
+            self._forward_to_player("play?path=" + quote(target, safe=URL_SAFE_CHARS))
+            return
+
+        if path == "/api/stop":
+            self._forward_to_player("stop")
+            return
+
         if fname := API_FILES.get(path):
             self._api_post(fname)
         else:
             self._json(405, {"error": "method not allowed"})
+
+    def _forward_to_player(self, endpoint: str) -> None:
+        """Mirror the ESP32: relay to the player and report back its status code."""
+        config = self._server_config()
+        url    = f"http://{config['server_host']}:{config['server_port']}/{endpoint}"
+
+        try:
+            with urllib.request.urlopen(url, timeout=PLAYER_TIMEOUT_SECONDS) as response:
+                code = response.status
+        except urllib.error.HTTPError as error:
+            code = error.code
+        except Exception as error:
+            print(f"  [dev] player unreachable: {error}")
+            code = 0
+
+        print(f"  [dev] {url} -> {code}")
+        self._json(200, {"code": code})
+
+    def _server_config(self) -> dict:
+        fpath = os.path.join(DATA_DIR, "server.json")
+        if os.path.exists(fpath):
+            with open(fpath, "rb") as f:
+                return json.load(f)
+        return DEFAULTS["server.json"]  # type: ignore[return-value]
 
     def _api_get(self, fname: str) -> None:
         fpath = os.path.join(DATA_DIR, fname)

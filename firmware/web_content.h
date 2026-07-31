@@ -59,13 +59,17 @@ static const char WEB_HTML[] = R"TOKIWEB(<!DOCTYPE html>
   </section>
 
   <section id="tab-map" class="panel">
-    <div class="tb-hdr"><button id="btn-save-map" class="btn">Save</button></div>
+    <div class="tb-hdr">
+      <button id="btn-stop" class="btn outline" type="button">Stop playback</button>
+      <button id="btn-save-map" class="btn">Save</button>
+    </div>
     <div class="tbl-wrap">
       <table>
         <thead><tr>
           <th class="th-n">#</th>
           <th class="th-rfid">RFID</th>
           <th>What to play</th>
+          <th class="th-play"></th>
         </tr></thead>
         <tbody id="map-body"></tbody>
       </table>
@@ -207,6 +211,7 @@ input:focus {
 .tb-hdr {
   display: flex;
   justify-content: flex-end;
+  gap: .75rem;
   margin-bottom: .875rem;
 }
 
@@ -257,6 +262,26 @@ tbody tr.hi {
   user-select: none;
 }
 .th-rfid { width: 9rem; }
+
+.th-play, td.play { width: 2.75rem; text-align: center; }
+
+.btn-play {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--mut);
+  font-size: .8125rem;
+  line-height: 1;
+  padding: .3rem .45rem;
+  cursor: pointer;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.btn-play:hover:not(:disabled) {
+  color: var(--pri);
+  background: rgba(74,108,247,.1);
+  border-color: var(--bdr);
+}
+.btn-play:disabled { opacity: .4; cursor: default; }
 
 td input[type=text] {
   width: 100%;
@@ -399,7 +424,8 @@ function renderMap() {
     tr.innerHTML =
       `<td class="n">${i + 1}</td>` +
       `<td><input type="text" class="rfid" value="${esc(e.rfid)}" placeholder="RFID" spellcheck="false"></td>` +
-      `<td><input type="text" value="${esc(e.label)}" placeholder="path or URL"></td>`;
+      `<td><input type="text" value="${esc(e.label)}" placeholder="path or URL"></td>` +
+      `<td class="play"><button type="button" class="btn-play" title="Play this on the music player">▶</button></td>`;
     frag.appendChild(tr);
   });
   const body = document.getElementById('map-body');
@@ -420,6 +446,59 @@ document.getElementById('btn-save-map').addEventListener('click', async () => {
     await post('/api/music-mapping', { entries });
     toast('Mapping saved.');
   } catch { toast('Save failed.', false); }
+});
+
+// Playback control
+const command = path => fetch(path, { method: 'POST' })
+  .then(r => { if (!r.ok) throw r.status; return r.json(); });
+
+// the ESP32 reports back whatever the music player answered
+const playerProblem = code => {
+  if (code === 200) return null;
+  if (code === 404) return 'Player: path not found.';
+  if (code === 400) return 'Player: bad request.';
+  if (code <= 0)    return 'Player unreachable.';
+  return `Player answered ${code}.`;
+};
+
+const clip = s => s.length > 42 ? s.slice(0, 41) + '…' : s;
+
+async function playPath(path, button) {
+  if (button) button.disabled = true;
+  try {
+    const { code } = await command('/api/play?path=' + encodeURIComponent(path));
+    const problem = playerProblem(code);
+    if (problem) { toast(problem, false); return; }
+    toast('Playing ' + clip(path));
+  } catch {
+    toast('Play request failed.', false);
+  } finally {
+    if (button) button.disabled = false;
+  }
+}
+
+document.getElementById('map-body').addEventListener('click', e => {
+  const button = e.target.closest('.btn-play');
+  if (!button) return;
+  const tr = button.closest('tr');
+  const label = tr.querySelectorAll('input')[1].value.trim();
+  if (!label) { toast(`Row ${Number(tr.dataset.i) + 1} has nothing to play.`, false); return; }
+  playPath(label, button);
+});
+
+document.getElementById('btn-stop').addEventListener('click', async e => {
+  const button = e.target;
+  button.disabled = true;
+  try {
+    const { code } = await command('/api/stop');
+    const problem = playerProblem(code);
+    if (problem) { toast(problem, false); return; }
+    toast('Playback stopped.');
+  } catch {
+    toast('Stop request failed.', false);
+  } finally {
+    button.disabled = false;
+  }
 });
 
 // RFID highlight / auto-fill

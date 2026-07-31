@@ -3,6 +3,7 @@
 #include <LittleFS.h>
 #include <WebServer.h>
 #include <WiFi.h>
+#include "api_client.h"
 #include "config_store.h"
 #include "web_content.h"
 
@@ -225,6 +226,40 @@ void web_server_setup()
             return;
          }
          server.send(200, "application/json", "{\"uid\":\"" + last_rfid + "\"}");
+      }
+   );
+
+   // Playback control — forwarded to the music player, reports back what it answered
+   server.on(
+      "/api/play",
+      HTTP_POST,
+      []()
+      {
+         if (!auth_ok())
+         {
+            return;
+         }
+         const auto path = server.arg("path");
+         if (path.isEmpty())
+         {
+            server.send(400, "application/json", R"({"error":"path required"})");
+            return;
+         }
+         const auto player_code = api_play(path);
+         server.send(200, "application/json", String(R"({"code":)") + player_code + "}");
+      }
+   );
+   server.on(
+      "/api/stop",
+      HTTP_POST,
+      []()
+      {
+         if (!auth_ok())
+         {
+            return;
+         }
+         const auto player_code = api_stop();
+         server.send(200, "application/json", String(R"({"code":)") + player_code + "}");
       }
    );
 
