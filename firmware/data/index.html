@@ -54,13 +54,17 @@
   </section>
 
   <section id="tab-map" class="panel">
-    <div class="tb-hdr"><button id="btn-save-map" class="btn">Save</button></div>
+    <div class="tb-hdr">
+      <button id="btn-stop" class="btn outline" type="button">Stop playback</button>
+      <button id="btn-save-map" class="btn">Save</button>
+    </div>
     <div class="tbl-wrap">
       <table>
         <thead><tr>
           <th class="th-n">#</th>
           <th class="th-rfid">RFID</th>
           <th>What to play</th>
+          <th class="th-play"></th>
         </tr></thead>
         <tbody id="map-body"></tbody>
       </table>

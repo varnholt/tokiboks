@@ -127,6 +127,7 @@ input:focus {
 .tb-hdr {
   display: flex;
   justify-content: flex-end;
+  gap: .75rem;
   margin-bottom: .875rem;
 }
 
@@ -177,6 +178,26 @@ tbody tr.hi {
   user-select: none;
 }
 .th-rfid { width: 9rem; }
+
+.th-play, td.play { width: 2.75rem; text-align: center; }
+
+.btn-play {
+  background: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  color: var(--mut);
+  font-size: .8125rem;
+  line-height: 1;
+  padding: .3rem .45rem;
+  cursor: pointer;
+  transition: color .15s, background .15s, border-color .15s;
+}
+.btn-play:hover:not(:disabled) {
+  color: var(--pri);
+  background: rgba(74,108,247,.1);
+  border-color: var(--bdr);
+}
+.btn-play:disabled { opacity: .4; cursor: default; }
 
 td input[type=text] {
   width: 100%;

@@ -84,6 +84,14 @@ Once connected, the device IP is printed to serial. Open it in a browser. The we
 - **Music Player** — IP address and port of the machine running the player
 - **Music Mapping** — maps RFID card UIDs to file paths or URLs. Tap a card while the mapping tab is open to auto-fill the next empty row.
 
+#### Playing from the web UI
+
+Every mapping row has a **▶** button that plays that row on the music player, so an entry can be tested without hunting for its card. It sends whatever is currently *typed* in the row, not what was last saved — handy for trying a path before committing it. **Stop playback** in the table header stops the player.
+
+Both go through the ESP32 (`POST /api/play?path=…`, `POST /api/stop`), which forwards to the player and passes its answer back, so the toast distinguishes the failure modes: a path the player can't find reports *path not found*, an unreachable or stopped player reports *player unreachable*.
+
+Paths are percent-encoded before being sent, so spaces and `&` in filenames work. A `%` in a label is left as-is, so labels that were already encoded by hand keep working.
+
 ---
 
 ## Player
@@ -107,6 +115,24 @@ python main.py
 ```
 
 The player listens on port `8000` by default. When the ESP32 scans an RFID card it looks up the label in the web UI mapping and sends a `GET /play?path=<label>` request to the player.
+
+### Feedback sounds
+
+Every `/play` request answers with a short cue before the album starts, so a card tap is never met with silence:
+
+| Cue | When | Response |
+|-----|------|----------|
+| `player/sounds/success.wav` | path exists, playback starting | `200` |
+| `player/sounds/error.wav` | path missing on disk | `404` |
+| `player/sounds/error.wav` | request without a path | `400` |
+
+Local paths are checked with `Path.exists()` before mpv is asked to load them — relative paths resolve against the player's working directory. Remote URLs (`http://`, `https://`, `rtsp://`, `rtmp://`) are passed through unchecked, since verifying a stream is not free.
+
+`GET /stop` stops playback and clears any pending sleep timer, since its fade would otherwise carry a reduced volume into whatever plays next.
+
+Cues play through a **second mpv instance** so they don't interrupt the album, which means two processes share the audio device. That works on PulseAudio/PipeWire and on ALSA's `default` (dmix) device; if a setup grabs the card exclusively, the cue instance fails to start, the player logs `cue player unavailable` and carries on without cues.
+
+Replace either file to change the sounds — any format mpv can read works, as long as the filename stays the same. Attribution for the bundled sounds is in `player/sounds/CREDITS.md`.
 
 ### Button actions
 
@@ -208,3 +234,5 @@ This starts a local server at `http://localhost:8080/` that mirrors the ESP32 AP
 ```
 http://localhost:8080/test-rfid?uid=ABCD1234
 ```
+
+The dev server also mirrors `/api/play` and `/api/stop`, forwarding them to whatever player is configured in the **Music Player** tab. The **▶** and **Stop playback** buttons therefore work against a real player without flashing anything.

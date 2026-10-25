@@ -1,5 +1,7 @@
 from http.server import BaseHTTPRequestHandler, HTTPServer
+from pathlib import Path
 from urllib.parse import urlparse, parse_qs
+import cues
 import mpvplayer
 from enum import IntEnum
 import threading
@@ -14,10 +16,19 @@ class ButtonId(IntEnum):
 HOST = "0.0.0.0"
 PORT = 8000
 FADE_OUT_SECONDS = 50
+REMOTE_SCHEMES = ("http://", "https://", "rtsp://", "rtmp://")
 
 sleep_until = None
 
 player = mpvplayer.MpvPlayer()
+
+
+def is_playable(path):
+    """Remote URLs are handed to mpv unchecked; local paths must exist."""
+    if path.lower().startswith(REMOTE_SCHEMES):
+        return True
+
+    return Path(path).exists()
 
 
 def sleep_watchdog():
@@ -99,16 +110,47 @@ class Handler(BaseHTTPRequestHandler):
 
         if parsed.path == "/play":
             path = query.get("path", [""])[0].strip()
-            if path:
-                player.load(path)
-                player.resume_if_paused()
-                self.send_response(200)
-                self.end_headers()
-                self.wfile.write(path.encode("utf-8"))
-            else:
+
+            if not path:
+                print("play request without path")
+                cues.play_error()
+
                 self.send_response(400)
                 self.end_headers()
                 self.wfile.write(b"path required")
+                return
+
+            if not is_playable(path):
+                print(f"play request for missing path: {path}")
+                cues.play_error()
+
+                self.send_response(404)
+                self.end_headers()
+                self.wfile.write(b"path not found")
+                return
+
+            print(f"play: {path}")
+            cues.play_success()
+            player.load(path)
+            player.resume_if_paused()
+
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(path.encode("utf-8"))
+            return
+
+        if parsed.path == "/stop":
+            print("stop")
+            player.stop()
+
+            # a pending sleep timer has nothing left to stop, and its fade would
+            # otherwise carry a reduced volume into whatever plays next
+            sleep_until = None
+            player.set_volume(100)
+
+            self.send_response(200)
+            self.end_headers()
+            self.wfile.write(b"stopped")
             return
 
         self.send_response(404)
@@ -121,6 +163,7 @@ if __name__ == "__main__":
     print(f"listening on {HOST}:{PORT}")
 
     try:
+        cues.setup()
         threading.Thread(target=sleep_watchdog, daemon=True).start()
         server.serve_forever()
     except KeyboardInterrupt:
@@ -128,5 +171,6 @@ if __name__ == "__main__":
     finally:
         print("stopping audio player...")
         player.quit()
+        cues.shutdown()
         server.server_close()
         print("shutdown complete")
