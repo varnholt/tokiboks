@@ -213,7 +213,7 @@ Tool for generating printable credit-card-sized artwork for the RFID cards. Requ
 
 ```bash
 cd labels
-uv run --with Pillow create_card.py --front /path/to/cover.jpg --output-dir output --cutting-guide --rfid black
+uv run --no-project --with Pillow create_card.py --front /path/to/cover.jpg --output-dir output --cutting-guide --rfid black
 ```
 
 Use `--back /path/to/back.jpg` for a reverse side, `--color-bottom` for a strip of dominant cover colors, or `--help` for all options. The default output is a portrait card at 1080 × 1712 pixels, matching a 54 × 85.6 mm card ratio.
