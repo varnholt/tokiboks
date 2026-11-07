@@ -1,12 +1,28 @@
 # tokiboks
 
-A physical music player controlled by RFID cards and four colored buttons. Tap a card to start playing the album associated with it. The buttons handle playback control and a sleep timer.
+A music player for toddlers, controlled by RFID cards and four colored buttons. Tap an album card to start listening; use the buttons to pause, skip tracks or set a sleep timer.
+
+![tokiboks system diagram: an RFID card is read by an ESP32, which controls a Python and mpv player over Wi-Fi](docs/system.svg)
+
+The ESP32 handles cards, buttons and the configuration web interface. A Raspberry Pi or another computer runs the audio player. Music paths are resolved on that player machine.
 
 The system has three parts:
 
 - **`firmware/`** — Arduino/ESP32 firmware
 - **`player/`** — Python music player, runs on a Raspberry Pi (or any host machine)
 - **`labels/`** — Tool for generating printable credit-card artwork for the RFID cards
+
+## Get started
+
+1. **Start the player.** Install Python 3.10+ and mpv, then run `python main.py` from [`player/`](player/). On Windows, the repository includes `mpv.exe`.
+2. **Set up the ESP32.** Follow the [wiring](#hardware) and [firmware setup](#firmware) below, then flash the board.
+3. **Connect the player.** Open the ESP32's web interface and set the player machine's IP address and port (`8000` by default).
+4. **Map a card.** Open **Music Mapping**, tap a card, enter a music path or stream URL, save, and use **▶** to test it.
+5. **Make the cards.** Use the [label generator](#labels) to prepare printable artwork for your albums.
+
+For a look at the configuration interface without hardware, run `uv run dev_server.py` from the repository root and open `http://localhost:8080/`. This simulates the ESP32 API; playback still requires a running player.
+
+[Hardware](#hardware) · [Firmware](#firmware) · [Player](#player) · [Labels](#labels) · [Troubleshooting](#troubleshooting) · [Development](#development)
 
 ---
 
@@ -143,6 +159,8 @@ Replace either file to change the sounds — any format mpv can read works, as l
 | Yellow | Next track      |
 | Green  | Sleep timer     |
 
+The current player starts a **one-minute** timer when Green is pressed, with a fade over the last 50 seconds. The interval is set in [`player/main.py`](player/main.py); its existing console message says 15 minutes, but the implemented interval is 60 seconds.
+
 ### Auto-start with systemd
 
 Create `/etc/systemd/system/tokiboks-player.service`:
@@ -153,7 +171,7 @@ Description=tokiboks music player
 After=network.target sound.target
 
 [Service]
-ExecStart=/usr/bin/python /home/pi/tokiboks/player/main.py
+ExecStart=/usr/bin/python3 /home/pi/tokiboks/player/main.py
 WorkingDirectory=/home/pi/tokiboks/player
 Restart=on-failure
 User=pi
@@ -191,12 +209,14 @@ python main.py
 
 ## Labels
 
-Tool for generating printable credit-card-sized artwork for the RFID cards. Requires [uv](https://docs.astral.sh/uv/).
+Tool for generating printable credit-card-sized artwork for the RFID cards. Requires [uv](https://docs.astral.sh/uv/). Supply your own cover images:
 
 ```bash
 cd labels
-uv run create_card.py --help
+uv run --with Pillow create_card.py --front /path/to/cover.jpg --output-dir output --cutting-guide --rfid black
 ```
+
+Use `--back /path/to/back.jpg` for a reverse side, `--color-bottom` for a strip of dominant cover colors, or `--help` for all options. The default output is a portrait card at 1080 × 1712 pixels, matching a 54 × 85.6 mm card ratio.
 
 ---
 
@@ -204,12 +224,11 @@ uv run create_card.py --help
 
 ### Can't reach the web UI after a reboot
 
-Your PC may have a stale ARP cache entry — it's sending packets to an outdated MAC address. Flush the cache to force re-resolution:
+Check the IP printed on serial: your router may have assigned a different address. Confirm the browser is on the same network as the ESP32. If the device is in fallback access-point mode, connect to **tokiboks** and use `http://192.168.4.1/`.
 
-```bash
-arp -d *                                    # Linux / macOS
-netsh interface ip delete arpcache          # Windows (run as admin)
-```
+### A card is detected, but nothing plays
+
+Check the player IP and port in **Music Player**, then test the mapping with **▶**. A local path must exist on the player computer, not the ESP32; a relative path is resolved from the player's working directory. Keep the player and ESP32 on the same local network. The player listens on port 8000 on all interfaces and does not implement authentication.
 
 ---
 
